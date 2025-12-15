@@ -1,69 +1,202 @@
-#root {
-  max-width: 1280px;
+/* 1. Global Reset & Fonts */
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  /* flexbox on body centers the whole app vertically on the screen */
+  display: flex;
+  align-items: center; 
+  justify-content: center;
+  background: radial-gradient(circle at top left, #2b1055, #7597de);
+  background-attachment: fixed;
+  color: white;
+}
+
+/* 2. Main Container */
+.container {
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  box-sizing: border-box; /* Ensures padding doesn't break width */
 }
 
+/* 3. The Title */
 h1 {
-  font-size: 3.2em;
-  margin-bottom: 40px;
+  font-size: 3.5rem;
+  margin-bottom: 2rem;
+  background: linear-gradient(to right, #00f260, #0575e6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  letter-spacing: -2px;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  background-color: #1a1a1a;
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #333;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-  transition: transform 0.2s;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  border-color: #646cff;
-}
-
-.price {
-  font-size: 2em;
-  font-weight: bold;
-  margin: 10px 0;
-}
-
-.change {
-  font-weight: 500;
-}
-
+/* 4. Search Box Styling */
 .search-box {
-  margin-bottom: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  border-radius: 50px;
+  display: flex;         
+  align-items: center;   
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  margin: 0 auto 50px auto;
+  max-width: 500px; 
 }
 
 input {
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  margin-right: 10px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.1rem;
+  padding: 10px 20px;
+  outline: none;
   width: 250px;
+  box-sizing: border-box;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 button {
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: #646cff;
-  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
-  border-radius: 8px;
+  padding: 12px 30px;
+  border-radius: 50px;
+  color: white;
+  font-weight: bold;
   cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
-  background-color: #535bf2;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
+}
+
+/* 5. The Grid Layout (UPDATED for Centering) */
+.grid {
+  display: flex;              /* Changed from grid to flex for better centering */
+  flex-wrap: wrap;            /* Allow wrapping */
+  justify-content: center;    /* Pushes everything to the middle */
+  gap: 30px;
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 6. The Glass Cards */
+.card {
+  /* Fix width so they don't stretch weirdly */
+  flex: 1 1 250px;            /* Grow: 1, Shrink: 1, Basis: 250px */
+  max-width: 350px;           /* Stop them from becoming giant */
+  min-width: 250px;           /* Stop them from becoming too small */
+  
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  
+  /* Center Text inside the card */
+  text-align: center;         
+  display: flex;
+  flex-direction: column;
+  align-items: center;        /* Centers items horizontally in the column */
+  
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-10px);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Card Typography */
+.card h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 10px;
+}
+
+.price {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 10px 0;
+  letter-spacing: -1px;
+}
+
+.change {
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.change[style*="green"] {
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.change[style*="red"] {
+  background: rgba(255, 0, 0, 0.1);
+}
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 600px) {
+  body {
+    align-items: flex-start; /* On mobile, start at top (don't center vertically) */
+    padding-top: 20px;
+  }
+  
+  .container {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  /* Stack Search Box */
+  .search-box {
+    flex-direction: column; 
+    border-radius: 20px;    
+    width: 100%;           
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  input {
+    width: 100%;       
+    margin-right: 0;   
+    margin-bottom: 15px; 
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  button {
+    width: 100%;       
+  }
+  
+  .card {
+    max-width: 100%; /* Allow full width on mobile */
+  }
 }
