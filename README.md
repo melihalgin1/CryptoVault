@@ -1,7 +1,6 @@
 # CryptoVault - Real-Time Crypto Portfolio Tracker
 
-**Live Demo:** [Insert Vercel Link Here]  
-**Repository:** [Insert GitHub Link Here]
+**Live Demo:** https://crypto-dashboard-three-tau.vercel.app/
 
 ## 🚀 Overview
 
