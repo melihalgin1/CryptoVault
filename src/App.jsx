@@ -272,7 +272,7 @@ function App() {
                 <div
                   key={id}
                   onClick={() => handleCoinClick(id)}
-                  className="bg-white p-8 rounded-xl shadow-lg border border-white/20 hover:shadow-2xl cursor-pointer transition-all relative overflow-hidden group hover:-translate-y-1 hover:scale-[1.01] flex flex-col min-h-[260px]"
+                  className="bg-white p-8 rounded-xl shadow-lg border border-white/20 hover:shadow-2xl cursor-pointer transition-all relative overflow-hidden group hover:-translate-y-1 hover:scale-[1.01] flex flex-col min-h-[320px]"
                 >
                   {!user && (
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-gray-100 px-2 py-1 rounded text-gray-500 font-medium">
@@ -292,7 +292,7 @@ function App() {
 
                   <div className="flex justify-between items-center mb-6 pr-8">
                     <div className="flex flex-col overflow-hidden">
-                      <h2 className="text-3xl font-bold capitalize text-gray-900 truncate">{id}</h2>
+                      <h2 className="text-2xl font-bold capitalize text-gray-900 leading-tight break-words">{id.replace(/-/g, ' ')}</h2>
                       <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">ID: {id}</span>
                     </div>
 
