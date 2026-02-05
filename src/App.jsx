@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore'; 
-import { auth, googleProvider, db } from './firebase'; 
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, googleProvider, db } from './firebase';
 import CoinDetail from './CoinDetail';
-import ManageAccount from './ManageAccount'; 
+import ManageAccount from './ManageAccount';
 import { translations } from './translations';
 import './App.css';
 
@@ -14,149 +14,123 @@ const ID_FIXES = {
   'bnb': 'binancecoin', 'binance': 'binancecoin',
   'matic': 'matic-network', 'polygon': 'matic-network',
   'pepe': 'pepe', 'pepecoin': 'pepe',
+  'doge': 'dogecoin', 'dot': 'polkadot', 'link': 'chainlink',
+  'uni': 'uniswap', 'ltc': 'litecoin', 'avax': 'avalanche-2',
+  'usdt': 'tether', 'xrp': 'ripple'
 };
 
 function App() {
   const [user, setUser] = useState(null);
-  const [coins, setCoins] = useState([]);
-  const [portfolio, setPortfolio] = useState({});
+  const [coins, setCoins] = useState({});
   const [selectedCoin, setSelectedCoin] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [showAccount, setShowAccount] = useState(false);
-  const [lang, setLang] = useState(localStorage.getItem('lang') || 'en');
+  const [holdings, setHoldings] = useState({});
+  const [currency, setCurrency] = useState('usd');
 
+  const [lang, setLang] = useState('en');
   const t = translations[lang];
 
-  const toggleLang = () => {
-    const newLang = lang === 'en' ? 'tr' : 'en';
-    setLang(newLang);
-    localStorage.setItem('lang', newLang);
-  };
+  const [watchedCoins, setWatchedCoins] = useState(DEFAULT_COINS);
+  const [newCoinId, setNewCoinId] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const signIn = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const signOutUser = async () => {
-    await signOut(auth);
-    setUser(null);
-    setPortfolio({});
+  const currencyConfig = {
+    usd: { label: 'USD', symbol: '$' },
+    eur: { label: 'EUR', symbol: '€' },
+    try: { label: 'TRY', symbol: '₺' },
+    gbp: { label: 'GBP', symbol: '£' },
+    jpy: { label: 'JPY', symbol: '¥' }
   };
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      if (u) {
-        setUser(u);
-        const ref = doc(db, 'users', u.uid);
-        const snap = await getDoc(ref);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
 
-        if (snap.exists()) {
-          setPortfolio(snap.data().holdings || {});
-          setCoins(snap.data().watchedCoins || DEFAULT_COINS);
-        } else {
-          await setDoc(ref, {
-            holdings: {},
-            watchedCoins: DEFAULT_COINS
-          });
-          setCoins(DEFAULT_COINS);
+      if (currentUser) {
+        try {
+          const docRef = doc(db, "users", currentUser.uid);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const rawList = data.watchedCoins || DEFAULT_COINS;
+            const cleanList = rawList.map(id => ID_FIXES[id] || id);
+
+            setHoldings(data.holdings || {});
+            setWatchedCoins(cleanList);
+
+            if (JSON.stringify(rawList) !== JSON.stringify(cleanList)) {
+              await setDoc(docRef, { watchedCoins: cleanList }, { merge: true });
+            }
+          } else {
+            await setDoc(docRef, { holdings: {}, watchedCoins: DEFAULT_COINS });
+          }
+        } catch (err) {
+          console.error("Error loading user data:", err);
         }
       } else {
-        setUser(null);
-        setPortfolio({});
-        setCoins(DEFAULT_COINS);
+        setSelectedCoin(null);
+        setShowAccount(false);
+        setHoldings({});
+        setWatchedCoins(DEFAULT_COINS);
       }
-      setLoading(false);
     });
 
-    return () => unsub();
+    return () => unsubscribe();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="cv-app min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!user) return;
+    const saveToDb = setTimeout(async () => {
+      try {
+        const userRef = doc(db, "users", user.uid);
+        await setDoc(userRef, { holdings, watchedCoins }, { merge: true });
+      } catch (err) {
+        console.error("Error saving data:", err);
+      }
+    }, 2000);
 
-  return (
-    <div className="cv-app">
-      <main className="min-h-screen px-4 py-8 max-w-7xl mx-auto">
-        {/* HEADER */}
-        <header className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">CryptoVault</h1>
+    return () => clearTimeout(saveToDb);
+  }, [holdings, watchedCoins, user]);
 
-          <div className="flex items-center gap-4">
-            {user ? (
-              <>
-                <button
-                  onClick={() => setShowAccount(true)}
-                  className="px-4 py-2 bg-white/80 rounded-lg font-semibold hover:bg-white transition"
-                >
-                  {t.account}
-                </button>
-                <button
-                  onClick={signOutUser}
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-                >
-                  {t.signOut}
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={signIn}
-                className="px-4 py-2 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 transition"
-              >
-                {t.signIn}
-              </button>
-            )}
-          </div>
-        </header>
+  const fetchCoins = async () => {
+    if (watchedCoins.length === 0) {
+      setCoins({});
+      return;
+    }
+    if (error) return;
 
-        {/* ACCOUNT SCREEN */}
-        {showAccount && user ? (
-          <ManageAccount
-            user={user}
-            onBack={() => setShowAccount(false)}
-            lang={lang}
-          />
-        ) : selectedCoin ? (
-          <CoinDetail
-            coinId={selectedCoin}
-            portfolio={portfolio}
-            setPortfolio={setPortfolio}
-            user={user}
-            lang={lang}
-          />
-        ) : (
-          <div className="grid gap-6">
-            {coins.map((coin) => (
-              <div
-                key={coin}
-                onClick={() => setSelectedCoin(ID_FIXES[coin] || coin)}
-                className="bg-white rounded-xl p-6 shadow-lg cursor-pointer hover:scale-[1.02] transition-transform"
-              >
-                <h2 className="text-xl font-bold capitalize">{coin}</h2>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
+    if (Object.keys(coins).length === 0) setLoading(true);
 
-      {/* DESKTOP FLOATING LANG BUTTON */}
-      <button 
-        onClick={toggleLang} 
-        className="hidden md:flex fixed bottom-6 right-6 bg-white rounded-full w-14 h-14 items-center justify-center shadow-xl text-2xl hover:scale-110 transition-transform z-50 cursor-pointer"
-        title="Switch Language"
-      >
-        {lang === 'en' ? '🇹🇷' : '🇬🇧'}
-      </button>
-    </div>
-  );
-}
+    try {
+      const ids = watchedCoins.join(',');
+      const API_KEY = import.meta.env.VITE_CG_API_KEY;
 
-export default App;
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd,eur,try,gbp,jpy&include_24hr_change=true&x_cg_demo_api_key=${API_KEY}`
+      );
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          setError(t.rateLimit);
+          return;
+        }
+        throw new Error("Failed to fetch data.");
+      }
+
+      const data = await response.json();
+      setCoins(data);
+      setError(null);
+    } catch (err) {
+      if (!error) setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCoins();
+    const interval = setInterval(fetchCoins, 60000);
+    return () => clearInterval(interval);
+  }, [watched]()
