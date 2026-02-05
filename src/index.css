@@ -1,5 +1,12 @@
 /* src/index.css */
-body, html, #root {
+
+/* Tailwind should live here */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base reset */
+html, body, #root {
   margin: 0;
   padding: 0;
   width: 100%;

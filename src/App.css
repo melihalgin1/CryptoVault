@@ -1,14 +1,9 @@
-/* 1. TAILWIND DIRECTIVES */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* src/App.css */
 
-/* 2. COLORFUL BACKGROUND OVERRIDE */
-body {
-  margin: 0;
-  padding: 0;
+/* App theme wrapper: everything scoped to this */
+.cv-app {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  
+
   /* Rich Gradient Background */
   background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #3b0764 100%);
   background-attachment: fixed;
@@ -16,67 +11,60 @@ body {
   color: #111827;
 }
 
-/* 3. TRANSPARENCY FIXES */
-.min-h-screen {
+/* Ensure Tailwind min-h-screen doesn’t paint over the gradient */
+.cv-app .min-h-screen {
   background-color: transparent !important;
 }
 
-/* 4. CARD STYLING (Glassmorphism) */
-.bg-white {
+/* Glassmorphism: only inside app wrapper */
+.cv-app .bg-white {
   background-color: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* 5. NAVBAR STYLING */
-nav.bg-white\/90 {
+/* Navbar (matches your previous selector but scoped) */
+.cv-app nav.bg-white\/90 {
   background-color: rgba(255, 255, 255, 0.9) !important;
 }
 
-/* 6. GRAPH FIXES */
-.recharts-wrapper {
+/* Graph sizing fix */
+.cv-app .recharts-wrapper {
   width: 100% !important;
   height: 100% !important;
 }
 
-/* 7. TEXT FIXES */
-.text-gray-500 {
-  color: #64748b; 
+/* Text tone tweak (scoped) */
+.cv-app .text-gray-500 {
+  color: #64748b;
 }
 
-/* 8. ANIMATIONS */
+/* Animations */
 @keyframes pulse-slow {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
-.animate-pulse {
+.cv-app .animate-pulse {
   animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* 9. SCROLLBAR CUSTOMIZATION */
-::-webkit-scrollbar {
-  width: 10px;
-}
-::-webkit-scrollbar-track {
-  background: #0f172a; 
-}
+/* Scrollbar customization (global by nature, but visually tied to app) */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #0f172a; }
 ::-webkit-scrollbar-thumb {
-  background: #475569; 
+  background: #475569;
   border-radius: 5px;
   border: 2px solid #0f172a;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
-/* 10. REMOVE INPUT SPINNERS (The Fix) */
-/* Chrome, Safari, Edge, Opera */
-input[type=number]::-webkit-inner-spin-button, 
-input[type=number]::-webkit-outer-spin-button { 
-  -webkit-appearance: none; 
-  margin: 0; 
+/* Remove input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
-/* Firefox */
 input[type=number] {
   -moz-appearance: textfield;
 }
