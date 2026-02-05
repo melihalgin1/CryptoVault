@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, googleProvider, db } from './firebase';
 import CoinDetail from './CoinDetail';
 import ManageAccount from './ManageAccount';
+import AuthModal from './AuthModal';
 import { translations } from './translations';
 import './App.css';
 
@@ -28,6 +29,7 @@ function App() {
   const [currency, setCurrency] = useState('usd');
 
   const [lang, setLang] = useState('en');
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const t = translations[lang];
 
   const [watchedCoins, setWatchedCoins] = useState(DEFAULT_COINS);
@@ -60,7 +62,6 @@ function App() {
             setHoldings(data.holdings || {});
             setWatchedCoins(cleanList);
 
-            // Normalize ids if needed
             if (JSON.stringify(rawList) !== JSON.stringify(cleanList)) {
               await setDoc(docRef, { watchedCoins: cleanList }, { merge: true });
             }
@@ -83,7 +84,6 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // Save user data (holdings + watched list) when logged in
   useEffect(() => {
     if (!user) return;
     const saveToDb = setTimeout(async () => {
@@ -133,7 +133,6 @@ function App() {
     }
   };
 
-  // ✅ FIXED: the broken line in your file
   useEffect(() => {
     fetchCoins();
     const interval = setInterval(fetchCoins, 60000);
@@ -145,6 +144,7 @@ function App() {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
       console.error(err);
+      throw err;
     }
   };
 
@@ -192,7 +192,7 @@ function App() {
     if (user) {
       setSelectedCoin(coinId);
     } else {
-      if (window.confirm("Sign in to view charts?")) handleGoogleSignIn();
+      if (window.confirm("Sign in to view charts?")) setShowAuthModal(true);
     }
   };
 
@@ -282,7 +282,7 @@ function App() {
 
                   <button
                     onClick={(e) => handleRemoveCoin(e, id)}
-                    className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors z-10 p-1 rounded-full hover:bg-gray-100 opacity-0 group-hover:opacity-100"
+                    className="absolute top-4 right-4 text-gray-500 hover:text-red-600 transition-colors z-10 p-2 rounded-full bg-white/70 backdrop-blur border border-gray-200 opacity-100 hover:bg-red-50"
                     title={t.remove}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -292,7 +292,9 @@ function App() {
 
                   <div className="flex justify-between items-center mb-6 pr-8">
                     <div className="flex flex-col overflow-hidden">
-                      <h2 className="text-2xl font-bold capitalize text-gray-900 leading-tight break-words">{id.replace(/-/g, ' ')}</h2>
+                      <h2 className="text-2xl font-bold capitalize text-gray-900 leading-tight break-words">
+                        {id.replace(/-/g, ' ')}
+                      </h2>
                       <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">ID: {id}</span>
                     </div>
 
@@ -306,7 +308,7 @@ function App() {
                   </div>
 
                   <div className="mb-6">
-                    <div className="text-5xl font-bold text-gray-800 tracking-tight break-all">
+                    <div className="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight break-all">
                       {hasData ? (
                         `${symbol}${currentPrice.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
@@ -393,27 +395,26 @@ function App() {
           {user ? (
             <>
               <button
-  onClick={() => setShowAccount(true)}
-  className="flex items-center gap-3 bg-white px-3 py-2 rounded-lg font-bold hover:bg-gray-100 transition border border-gray-200 shadow-sm"
-  title={t.account}
->
-  <img
-    src={
-      user?.photoURL ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'User')}&background=EEF2FF&color=1F2937&size=64`
-    }
-    alt="Profile"
-    className="w-8 h-8 rounded-full border border-gray-200 object-cover"
-    referrerPolicy="no-referrer"
-    onError={(e) => {
-      // fallback if photoURL fails to load
-      e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'User')}&background=EEF2FF&color=1F2937&size=64`;
-    }}
-  />
-  <span className="hidden md:inline">
-    {user?.displayName?.split(' ')[0] || t.account}
-  </span>
-</button>
+                onClick={() => setShowAccount(true)}
+                className="flex items-center gap-3 bg-white px-3 py-2 rounded-lg font-bold hover:bg-gray-100 transition border border-gray-200 shadow-sm"
+                title={t.account}
+              >
+                <img
+                  src={
+                    user?.photoURL ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'User')}&background=EEF2FF&color=1F2937&size=64`
+                  }
+                  alt="Profile"
+                  className="w-8 h-8 rounded-full border border-gray-200 object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'User')}&background=EEF2FF&color=1F2937&size=64`;
+                  }}
+                />
+                <span className="hidden md:inline">
+                  {user?.displayName?.split(' ')[0] || t.account}
+                </span>
+              </button>
 
               <button
                 onClick={handleSignOut}
@@ -424,7 +425,7 @@ function App() {
             </>
           ) : (
             <button
-              onClick={handleGoogleSignIn}
+              onClick={() => setShowAuthModal(true)}
               className="bg-white px-4 py-2 rounded-lg font-bold hover:bg-gray-100 transition"
             >
               {t.signIn}
@@ -436,6 +437,13 @@ function App() {
       <div className="flex-1 px-4 py-8 max-w-7xl mx-auto w-full">
         {renderContent()}
       </div>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        auth={auth}
+        onGoogleSignIn={handleGoogleSignIn}
+      />
 
       {/* Mobile floating language button */}
       <button
