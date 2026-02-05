@@ -393,11 +393,28 @@ function App() {
           {user ? (
             <>
               <button
-                onClick={() => setShowAccount(true)}
-                className="bg-white px-4 py-2 rounded-lg font-bold hover:bg-gray-100 transition"
-              >
-                {t.account}
-              </button>
+  onClick={() => setShowAccount(true)}
+  className="flex items-center gap-3 bg-white px-3 py-2 rounded-lg font-bold hover:bg-gray-100 transition border border-gray-200 shadow-sm"
+  title={t.account}
+>
+  <img
+    src={
+      user?.photoURL ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'User')}&background=EEF2FF&color=1F2937&size=64`
+    }
+    alt="Profile"
+    className="w-8 h-8 rounded-full border border-gray-200 object-cover"
+    referrerPolicy="no-referrer"
+    onError={(e) => {
+      // fallback if photoURL fails to load
+      e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'User')}&background=EEF2FF&color=1F2937&size=64`;
+    }}
+  />
+  <span className="hidden md:inline">
+    {user?.displayName?.split(' ')[0] || t.account}
+  </span>
+</button>
+
               <button
                 onClick={handleSignOut}
                 className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-600 transition"
