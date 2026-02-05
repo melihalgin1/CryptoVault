@@ -61,11 +61,16 @@ const ManageAccount = ({ user, onBack, lang = 'en' }) => {
       try {
         await deleteDoc(doc(db, 'users', user.uid));
       } catch (err) {
-        if (err?.code === 'permission-denied' || err?.message?.toLowerCase?.().includes('permission')) {
-          await scrubUserDoc();
-        } else {
-          throw err;
-        }
+        if (error.code === 'auth/popup-blocked') {
+  alert(
+    "To delete your account, we need to re-verify your identity.\n\n" +
+    "Your browser blocked the sign-in popup.\n\n" +
+    "Please allow pop-ups for this site and try again.\n\n" +
+    "Safari: Settings → Websites → Pop-up Windows → Allow"
+  );
+  return;
+}
+
       }
 
       // Step B: Delete Authentication user (may require recent login)
