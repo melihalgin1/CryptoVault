@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
   updateProfile,
 } from "firebase/auth";
 
@@ -38,7 +39,18 @@ export default function AuthModal({
     setMessage("");
 
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+
+      await cred.user.reload();
+
+      if (!cred.user.emailVerified) {
+        await auth.signOut();
+        setMessage(
+          "Your email address is not verified yet. Please check your inbox and verify your email before signing in."
+        );
+        return;
+      }
+
       closeModal();
     } catch (err) {
       setMessage(err?.message || "Sign in failed.");
@@ -64,7 +76,16 @@ export default function AuthModal({
         });
       }
 
-      closeModal();
+      await sendEmailVerification(cred.user);
+
+      setMessage(
+        "Account created. Verification email sent. Please verify your email before signing in."
+      );
+
+      await auth.signOut();
+
+      setTab("signin");
+      setPassword("");
     } catch (err) {
       setMessage(err?.message || "Account creation failed.");
     } finally {
@@ -83,7 +104,7 @@ export default function AuthModal({
       }
 
       await sendPasswordResetEmail(auth, email.trim());
-      setMessage("Password reset email sent.");
+      setMessage("Password reset email sent. Check your inbox.");
     } catch (err) {
       setMessage(err?.message || "Reset failed.");
     } finally {
@@ -112,12 +133,9 @@ export default function AuthModal({
         if (e.target === e.currentTarget) closeModal();
       }}
     >
-      {/* Overlay */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-      {/* Modal */}
       <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
-        {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
           <h2 className="text-lg font-bold text-gray-900">
             Sign in to CryptoVault
@@ -132,9 +150,7 @@ export default function AuthModal({
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-6 space-y-5">
-          {/* Google */}
           <button
             onClick={handleGoogle}
             disabled={busy}
@@ -143,14 +159,12 @@ export default function AuthModal({
             Continue with Google
           </button>
 
-          {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="h-px bg-gray-200 flex-1" />
             <div className="text-xs text-gray-500">OR</div>
             <div className="h-px bg-gray-200 flex-1" />
           </div>
 
-          {/* Tabs */}
           <div className="flex gap-2 bg-gray-50 p-1 rounded-xl border border-gray-200">
             <button
               onClick={() => setTab("signin")}
@@ -175,7 +189,6 @@ export default function AuthModal({
             </button>
           </div>
 
-          {/* Form */}
           <div className="space-y-3">
             {tab === "signup" && (
               <input
@@ -210,17 +223,11 @@ export default function AuthModal({
             )}
 
             <button
-              onClick={
-                tab === "signin"
-                  ? handleEmailSignIn
-                  : handleEmailSignUp
-              }
+              onClick={tab === "signin" ? handleEmailSignIn : handleEmailSignUp}
               disabled={busy || !canSubmit}
               className="w-full px-4 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition disabled:opacity-60"
             >
-              {tab === "signin"
-                ? "Sign in with Email"
-                : "Create account"}
+              {tab === "signin" ? "Sign in with Email" : "Create account"}
             </button>
 
             <button

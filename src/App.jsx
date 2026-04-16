@@ -51,7 +51,25 @@ function App() {
 
       if (currentUser) {
         try {
-          const docRef = doc(db, "users", currentUser.uid);
+          const isPasswordUser = currentUser.providerData.some(
+            (p) => p.providerId === 'password'
+          );
+
+          if (isPasswordUser) {
+            await currentUser.reload();
+
+            if (!auth.currentUser?.emailVerified) {
+              await signOut(auth);
+              setShowAuthModal(true);
+              setSelectedCoin(null);
+              setShowAccount(false);
+              setHoldings({});
+              setWatchedCoins(DEFAULT_COINS);
+              return;
+            }
+          }
+
+          const docRef = doc(db, 'users', currentUser.uid);
           const docSnap = await getDoc(docRef);
 
           if (docSnap.exists()) {
@@ -71,7 +89,7 @@ function App() {
             setWatchedCoins(DEFAULT_COINS);
           }
         } catch (err) {
-          console.error("Error loading user data:", err);
+          console.error('Error loading user data:', err);
         }
       } else {
         setSelectedCoin(null);
@@ -88,10 +106,10 @@ function App() {
     if (!user) return;
     const saveToDb = setTimeout(async () => {
       try {
-        const userRef = doc(db, "users", user.uid);
+        const userRef = doc(db, 'users', user.uid);
         await setDoc(userRef, { holdings, watchedCoins }, { merge: true });
       } catch (err) {
-        console.error("Error saving data:", err);
+        console.error('Error saving data:', err);
       }
     }, 500);
 
@@ -120,7 +138,7 @@ function App() {
           setError(t.rateLimit);
           return;
         }
-        throw new Error("Failed to fetch data.");
+        throw new Error('Failed to fetch data.');
       }
 
       const data = await response.json();
@@ -192,7 +210,7 @@ function App() {
     if (user) {
       setSelectedCoin(coinId);
     } else {
-      if (window.confirm("Sign in to view charts?")) setShowAuthModal(true);
+      if (window.confirm('Sign in to view charts?')) setShowAuthModal(true);
     }
   };
 
@@ -263,7 +281,7 @@ function App() {
               const hasData = coinData[currency] !== undefined;
               const currentPrice = hasData ? coinData[currency] : 0;
 
-              const userAmount = parseFloat(holdings[id] || "0") || 0;
+              const userAmount = parseFloat(holdings[id] || '0') || 0;
               const userValue = userAmount * currentPrice;
 
               const { symbol } = currencyConfig[currency];
@@ -445,7 +463,6 @@ function App() {
         onGoogleSignIn={handleGoogleSignIn}
       />
 
-      {/* Mobile floating language button */}
       <button
         onClick={toggleLang}
         className="md:hidden fixed bottom-6 right-6 bg-white rounded-full w-14 h-14 flex items-center justify-center shadow-xl text-2xl hover:scale-110 transition-transform z-50 cursor-pointer"
