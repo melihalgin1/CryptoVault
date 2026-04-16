@@ -12,66 +12,94 @@ export default function AuthModal({
   auth,
   onGoogleSignIn,
 }) {
-  const [tab, setTab] = useState("signin"); // "signin" | "signup"
+  const [tab, setTab] = useState("signin"); // signin | signup
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [message, setMessage] = useState("");
 
   const canSubmit = useMemo(() => {
-    if (!email.trim() || !password) return false;
-    if (tab === "signup" && displayName.trim().length === 0) return false;
+    if (!email.trim() || !password.trim()) return false;
+    if (tab === "signup" && !displayName.trim()) return false;
     return true;
   }, [email, password, displayName, tab]);
 
   if (!isOpen) return null;
 
-  const close = () => {
+  const closeModal = () => {
     if (busy) return;
-    setMsg("");
+    setMessage("");
     onClose();
   };
 
-  const signInEmail = async () => {
-    setMsg("");
+  const handleEmailSignIn = async () => {
     setBusy(true);
+    setMessage("");
+
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      close();
-    } catch (e) {
-      setMsg(e?.message || String(e));
+      closeModal();
+    } catch (err) {
+      setMessage(err?.message || "Sign in failed.");
     } finally {
       setBusy(false);
     }
   };
 
-  const signUpEmail = async () => {
-    setMsg("");
+  const handleEmailSignUp = async () => {
     setBusy(true);
+    setMessage("");
+
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      await updateProfile(cred.user, { displayName: displayName.trim() });
-      close();
-    } catch (e) {
-      setMsg(e?.message || String(e));
+      const cred = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+
+      if (displayName.trim()) {
+        await updateProfile(cred.user, {
+          displayName: displayName.trim(),
+        });
+      }
+
+      closeModal();
+    } catch (err) {
+      setMessage(err?.message || "Account creation failed.");
     } finally {
       setBusy(false);
     }
   };
 
-  const resetPw = async () => {
-    setMsg("");
+  const handlePasswordReset = async () => {
     setBusy(true);
+    setMessage("");
+
     try {
       if (!email.trim()) {
-        setMsg("Enter your email first, then click reset.");
+        setMessage("Enter your email first.");
         return;
       }
+
       await sendPasswordResetEmail(auth, email.trim());
-      setMsg("Password reset email sent. Check your inbox.");
-    } catch (e) {
-      setMsg(e?.message || String(e));
+      setMessage("Password reset email sent.");
+    } catch (err) {
+      setMessage(err?.message || "Reset failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setBusy(true);
+    setMessage("");
+
+    try {
+      await onGoogleSignIn();
+      closeModal();
+    } catch (err) {
+      setMessage(err?.message || "Google sign-in failed.");
     } finally {
       setBusy(false);
     }
@@ -80,51 +108,42 @@ export default function AuthModal({
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
       onMouseDown={(e) => {
-        // click outside closes
-        if (e.target === e.currentTarget) close();
+        if (e.target === e.currentTarget) closeModal();
       }}
     >
-      {/* overlay */}
+      {/* Overlay */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-      {/* modal */}
+      {/* Modal */}
       <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div className="text-lg font-bold text-gray-900">Sign in</div>
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+          <h2 className="text-lg font-bold text-gray-900">
+            Sign in to CryptoVault
+          </h2>
+
           <button
-            className="text-gray-500 hover:text-gray-900 transition p-2 rounded-lg hover:bg-gray-100"
-            onClick={close}
+            onClick={closeModal}
             disabled={busy}
-            aria-label="Close"
+            className="text-gray-500 hover:text-gray-900 transition p-2 rounded-lg hover:bg-gray-100"
           >
             ✕
           </button>
         </div>
 
+        {/* Body */}
         <div className="p-6 space-y-5">
           {/* Google */}
           <button
-            onClick={async () => {
-              setMsg("");
-              setBusy(true);
-              try {
-                await onGoogleSignIn();
-                close();
-              } catch (e) {
-                setMsg(e?.message || String(e));
-              } finally {
-                setBusy(false);
-              }
-            }}
+            onClick={handleGoogle}
             disabled={busy}
             className="w-full px-4 py-3 rounded-xl font-bold border border-gray-200 hover:bg-gray-50 transition disabled:opacity-60"
           >
             Continue with Google
           </button>
 
+          {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="h-px bg-gray-200 flex-1" />
             <div className="text-xs text-gray-500">OR</div>
@@ -136,22 +155,27 @@ export default function AuthModal({
             <button
               onClick={() => setTab("signin")}
               className={`flex-1 px-3 py-2 rounded-lg font-bold transition ${
-                tab === "signin" ? "bg-white shadow-sm" : "text-gray-600 hover:text-gray-900"
+                tab === "signin"
+                  ? "bg-white shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
               Sign in
             </button>
+
             <button
               onClick={() => setTab("signup")}
               className={`flex-1 px-3 py-2 rounded-lg font-bold transition ${
-                tab === "signup" ? "bg-white shadow-sm" : "text-gray-600 hover:text-gray-900"
+                tab === "signup"
+                  ? "bg-white shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
               Sign up
             </button>
           </div>
 
-          {/* Email form */}
+          {/* Form */}
           <div className="space-y-3">
             {tab === "signup" && (
               <input
@@ -170,6 +194,7 @@ export default function AuthModal({
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
             />
+
             <input
               type="password"
               placeholder="Password"
@@ -178,32 +203,34 @@ export default function AuthModal({
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
             />
 
-            {msg && (
+            {message && (
               <div className="text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-                {msg}
+                {message}
               </div>
             )}
 
             <button
-              onClick={tab === "signin" ? signInEmail : signUpEmail}
+              onClick={
+                tab === "signin"
+                  ? handleEmailSignIn
+                  : handleEmailSignUp
+              }
               disabled={busy || !canSubmit}
               className="w-full px-4 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition disabled:opacity-60"
             >
-              {tab === "signin" ? "Sign in with Email" : "Create account"}
+              {tab === "signin"
+                ? "Sign in with Email"
+                : "Create account"}
             </button>
 
             <button
-              onClick={resetPw}
+              onClick={handlePasswordReset}
               disabled={busy}
               className="w-full text-sm text-gray-600 hover:text-gray-900 underline underline-offset-4"
             >
               Forgot password?
             </button>
           </div>
-        </div>
-
-        <div className="px-6 py-4 border-t border-gray-100 text-xs text-gray-500">
-          Tip: If you later publish on iOS, consider adding “Sign in with Apple”.
         </div>
       </div>
     </div>
